@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="style_media_controller_text">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="style_media_controller_seekbar"
+           parent="android:Widget.SeekBar">
+        <item name="android:progressDrawable">@drawable/seek_bar_progress</item>
+        <item name="android:indeterminateDrawable">@drawable/seek_bar_progress</item>
+        <item name="android:minHeight">13dip</item>
+        <item name="android:maxHeight">13dip</item>
+        <item name="android:thumb">@drawable/seek_bar_progress_dot</item>
+        <item name="android:thumbOffset">16dip</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
+    </style>
+
+</resources>
