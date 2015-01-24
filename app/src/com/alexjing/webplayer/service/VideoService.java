@@ -18,13 +18,78 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
      * 是否初始化
      */
     private boolean isInit;
+
     /**
      * vitamio播放器
      */
     private MediaPlayer mediaPlayer;
 
-    private final IBinder mBinder = new LocalBinder();
+    private PlayerListener playerListener;
+    /**
+     * 自定义播放回调接口
+     */
+    private static interface PlayerListener
+    {
+        /**
+         * 硬件渲染失败调用
+         */
+        public void onHWRenderFailed();
 
+        /**
+         * 视频尺寸变化时调用
+         * @param width
+         * @param height
+         */
+        public void onVideoSizeChanged(int width,int height);
+
+        /**
+         * 播放器初始化完成后，将开始读取文件时调用
+         */
+        public void onOpenStart();
+
+        /**
+         * 准备播放完成后，将开始播放时播放
+         */
+        public void onOpenSuccess();
+
+        /**
+         * 打开播放错误时调用
+         */
+        public void onOpenFailed();
+
+        /**
+         * 缓冲开始调用
+         */
+        public void onBufferStart();
+
+        /**
+         * 缓冲完成调用
+         */
+        public void onBufferComplete();
+
+        /**
+         * 缓冲时下载速率调用
+         * @param kbPerSec
+         */
+        public void onDownloadRateChanged(int kbPerSec);
+
+        /**
+         * 播放完成时调用
+         */
+        public void onPlayComplete();
+
+        /**
+         * 网络错误时调用
+         */
+        public void onNetworkError();
+
+        /**
+         * seek 完成调用
+         */
+        public void onSeekComplete();
+    }
+
+    private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder
     {
@@ -67,9 +132,21 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     }
 
 
-    private void initlize()
+    private void initialize(PlayerListener playerListener,String[] datas,long startPos,boolean isHWCodec)
     {
+        if (mediaPlayer == null)
+        {
+            mediaPlayerInit(isHWCodec);
+        }
+    }
 
+    /**
+     * 初始化媒体播放器
+     * @param isHWCodec 是否启动硬件渲染
+     */
+    private void mediaPlayerInit(boolean isHWCodec)
+    {
+        mediaPlayer = new MediaPlayer(VideoService.this.getApplicationContext(),isHWCodec);
     }
 
     /**
@@ -234,5 +311,19 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height)
     {
 
+    }
+
+    /**
+     * 设置播放监听
+     * @param playerListener
+     */
+    public void setPlayerListener(PlayerListener playerListener)
+    {
+        this.playerListener = playerListener;
+    }
+
+    public boolean isInitialized()
+    {
+        return isInit;
     }
 }
