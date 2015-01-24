@@ -3,17 +3,23 @@ package com.alexjing.webplayer.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
+import android.view.SurfaceHolder;
+import com.alexjing.webplayer.utils.Config;
+import com.alexjing.webplayer.utils.LogUtil;
+import com.alexjing.webplayer.utils.NetworkUtil;
 import io.vov.vitamio.MediaPlayer;
 
 /**
- * 创建播放服务，为其提供监控方法.
+ * 创建播放服务，为其提供监听回调方法.
  * Created by alex on 15/1/23.
  */
 public class VideoService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnBufferingUpdateListener
         , MediaPlayer.OnCachingUpdateListener, MediaPlayer.OnErrorListener, MediaPlayer.OnHWRenderFailedListener, MediaPlayer.OnInfoListener
         , MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnTimedTextListener, MediaPlayer.OnVideoSizeChangedListener
 {
+    private static final String TAG = VideoService.class.getSimpleName();
     /**
      * 是否初始化
      */
@@ -24,6 +30,23 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
      */
     private MediaPlayer mediaPlayer;
 
+    /**
+     * 视频屏幕
+     */
+    private SurfaceHolder surfaceHolder;
+
+    /**
+     * 播放地址数组
+     */
+    private String[] mediaUrls;
+
+    /**
+     * 进度切换至
+     */
+    private long seekTo;
+    /**
+     * 播放监听
+     */
     private PlayerListener playerListener;
     /**
      * 自定义播放回调接口
@@ -117,6 +140,19 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     {
         super.onDestroy();
         //release
+        release();
+    }
+
+    private void release()
+    {
+        if (mediaPlayer != null)
+        {
+            mediaPlayer.reset();
+            mediaPlayer.release();
+            playerListener = null;
+            surfaceHolder = null;
+            isInit = false;
+        }
     }
 
     @Override
@@ -131,6 +167,25 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
         return super.onUnbind(intent);
     }
 
+    private void start()
+    {
+        if (!isPlaying())
+        {
+            mediaPlayer.start();
+        }else
+        {
+            LogUtil.d(TAG,"start\n can't start");
+        }
+    }
+
+    public boolean isPlaying()
+    {
+        if (isInit && mediaPlayer != null)
+        {
+            return mediaPlayer.isPlaying();
+        }else
+            return false;
+    }
 
     private void initialize(PlayerListener playerListener,String[] datas,long startPos,boolean isHWCodec)
     {
@@ -138,6 +193,14 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
         {
             mediaPlayerInit(isHWCodec);
         }
+
+        this.playerListener = playerListener;
+        this.mediaUrls = datas;
+        this.seekTo = startPos;
+
+        playerListener.onOpenStart();//准备打开加载播放
+
+        openVideo();
     }
 
     /**
@@ -147,6 +210,42 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     private void mediaPlayerInit(boolean isHWCodec)
     {
         mediaPlayer = new MediaPlayer(VideoService.this.getApplicationContext(),isHWCodec);
+
+        mediaPlayer.setOnVideoSizeChangedListener(this);
+        mediaPlayer.setOnBufferingUpdateListener(this);
+        mediaPlayer.setOnHWRenderFailedListener(this);//监听硬件渲染
+        mediaPlayer.setOnCachingUpdateListener(this);
+        mediaPlayer.setOnSeekCompleteListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnTimedTextListener(this);
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnErrorListener(this);
+        mediaPlayer.setOnInfoListener(this);
+    }
+
+    /**
+     * 打开Video
+     */
+    private void openVideo()
+    {
+        if (mediaPlayer == null || mediaUrls == null || mediaUrls.length == 0)
+        {
+            LogUtil.e(TAG, "openVideo error\n mediaPlayer:" + mediaPlayer + "\n mediaUrls:" + mediaUrls);
+            return;
+        }
+
+        isInit = false;
+        mediaPlayer.reset();
+        //此处可以先创建文件夹
+        mediaPlayer.setDataSegments(mediaUrls, Environment.getExternalStorageDirectory()+ Config.VIDEO_CACHE_DIR);
+
+        if (surfaceHolder != null && surfaceHolder.getSurface() != null && surfaceHolder.getSurface().isValid())
+        {
+            setDisplay(surfaceHolder);
+        }
+
+        mediaPlayer.prepareAsync();
+
     }
 
     /**
@@ -157,7 +256,10 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onCompletion(MediaPlayer mp)
     {
-
+        if (playerListener != null)
+        {
+            playerListener.onPlayComplete();
+        }
     }
 
     /**
@@ -220,6 +322,11 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra)
     {
+        //具体错误提示，以后添加
+        if (playerListener != null)
+        {
+            playerListener.onOpenFailed();
+        }
         return false;
     }
 
@@ -229,7 +336,10 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onFailed()
     {
-
+        if (playerListener != null)
+        {
+            playerListener.onHWRenderFailed();
+        }
     }
 
     /**
@@ -251,7 +361,37 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public boolean onInfo(MediaPlayer mp, int what, int extra)
     {
-        return false;
+        if (playerListener != null)
+        {
+            if (NetworkUtil.isAvailable(getApplicationContext()))
+            {
+                switch (what)
+                {
+                    case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                        playerListener.onBufferStart();
+                        break;
+                    case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                        playerListener.onBufferComplete();
+                        break;
+                    case MediaPlayer.MEDIA_INFO_DOWNLOAD_RATE_CHANGED:
+                        playerListener.onDownloadRateChanged(extra);
+                        break;
+                    case MediaPlayer.MEDIA_INFO_NOT_SEEKABLE:
+                        //影片不可seek
+                        break;
+                    case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
+                        //影片解码困难
+                        break;
+                }
+            }else
+            {
+                playerListener.onNetworkError();
+            }
+        }else
+        {
+            LogUtil.e(TAG,"onInfo\n playerListener == null");
+        }
+        return true;
     }
 
     /**
@@ -262,7 +402,14 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onPrepared(MediaPlayer mp)
     {
+        preparedSuccess();
+    }
 
+    private void preparedSuccess()
+    {
+        isInit = true;
+        mediaPlayer.seekTo(seekTo);
+        playerListener.onOpenSuccess();
     }
 
     /**
@@ -310,7 +457,10 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height)
     {
-
+        if (playerListener != null)
+        {
+            playerListener.onVideoSizeChanged(width,height);
+        }
     }
 
     /**
@@ -322,6 +472,31 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
         this.playerListener = playerListener;
     }
 
+    /**
+     * 设置播放屏幕
+     * @param surfaceHolder
+     */
+    public void setDisplay(SurfaceHolder surfaceHolder)
+    {
+        this.surfaceHolder = surfaceHolder;
+        if (mediaPlayer != null)
+        {
+            mediaPlayer.setDisplay(surfaceHolder);
+        }else
+            LogUtil.e(TAG,"setDisplay->media player is null");
+    }
+
+    /**
+     * 释放播放屏幕
+     */
+    public void releaseDisplay()
+    {
+        if (mediaPlayer != null)
+        {
+            mediaPlayer.releaseDisplay();
+            surfaceHolder = null;
+        }
+    }
     public boolean isInitialized()
     {
         return isInit;
