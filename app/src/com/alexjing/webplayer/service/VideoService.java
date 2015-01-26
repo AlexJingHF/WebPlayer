@@ -167,7 +167,10 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
         return super.onUnbind(intent);
     }
 
-    private void start()
+    /**
+     * 开始播放
+     */
+    public void start()
     {
         if (!isPlaying())
         {
@@ -178,6 +181,181 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
         }
     }
 
+    /**
+     * 停止播放
+     */
+    public void stop()
+    {
+        if (isPlaying())
+        {
+            mediaPlayer.start();
+        }else
+        {
+            LogUtil.d(TAG,"stop\n can't stop");
+        }
+    }
+
+    /**
+     * 设置跳转时间
+     * @param seekTo
+     */
+    public void seekTo(long seekTo)
+    {
+        if (isInit)
+        {
+            mediaPlayer.seekTo(seekTo);
+        }
+    }
+
+    /**
+     * 获取时间总长
+     * @return
+     */
+    public long getDuration()
+    {
+        if (isInit)
+        {
+            return mediaPlayer.getDuration();
+        }else
+            return 0;
+    }
+
+    /**
+     *  设置视频播放质量
+     *  default is VIDEOQUALITY_LOW.
+     *
+     * @param quality <ul>
+     *                <li>{@link io.vov.vitamio.MediaPlayer.VIDEOQUALITY_HIGH}
+     *                <li>{@link io.vov.vitamio.MediaPlayer.VIDEOQUALITY_MEDIUM}
+     *                <li>{@link io.vov.vitamio.MediaPlayer.VIDEOQUALITY_LOW}
+     *                </ul>
+     */
+    public void setVideoQuality(int quality)
+    {
+        if (isInit)
+        {
+            mediaPlayer.setVideoQuality(quality);
+        }
+    }
+
+    /**
+     * 设置隔行扫描
+     * @param deinterlace
+     */
+    public void setDeinterlace(boolean deinterlace)
+    {
+        if (isInit)
+        {
+            mediaPlayer.setDeinterlace(deinterlace);
+        }
+    }
+
+    /**
+     * 设置音量
+     * @param left 左声道
+     * @param right 右声道
+     */
+    public void setVolume(int left,int right)
+    {
+        if (isInit)
+        {
+            mediaPlayer.setVolume(left, right);
+        }
+    }
+
+    /**
+     * 获取缓冲状态
+     * @return boolean
+     */
+    public boolean isBuffering()
+    {
+        return (isInit && mediaPlayer.isBuffering());
+    }
+
+    /**
+     * 设置缓存区大小
+     * @param bufferSize
+     */
+    public void setBufferSize(int bufferSize)
+    {
+        if (isInit)
+        {
+            mediaPlayer.setBufferSize(bufferSize);
+        }
+    }
+
+    /**
+     * 获取缓冲进度
+     * @return
+     */
+    public float getBufferProgress()
+    {
+        if (isInit)
+        {
+            return mediaPlayer.getBufferProgress();
+        }else
+            return 0f;
+    }
+
+    /**
+     * 获取当前播放时间
+     * @return
+     */
+    public long getCurrentPositon()
+    {
+        if (isInit)
+        {
+            return mediaPlayer.getCurrentPosition();
+        }else
+            return 0;
+    }
+
+    /**
+     * 获取视频宽
+     * @return
+     */
+    public int getVideoWidth()
+    {
+        if (isInit)
+        {
+            return mediaPlayer.getVideoWidth();
+        }else
+        {
+            return 0;
+        }
+    }
+
+    /**
+     * 获取视频高
+     * @return
+     */
+    public int getVideoHeight()
+    {
+        if (isInit)
+        {
+            return mediaPlayer.getVideoHeight();
+        }else
+        {
+            return 0;
+        }
+    }
+
+    /**
+     * 获取视频横宽比例
+     * @return
+     */
+    public float getVideoAspectRatio()
+    {
+        if (isInit)
+        {
+            return mediaPlayer.getVideoAspectRatio();
+        }
+        return 0f;
+    }
+    /**
+     * 获得播放状态
+     * @return
+     */
     public boolean isPlaying()
     {
         if (isInit && mediaPlayer != null)
