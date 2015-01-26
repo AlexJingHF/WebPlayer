@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import com.wxcily.xunplayer.player.ui.VideoActivity;
+import com.alexjing.webplayer.ui.VideoActivity;
 
 public class MainActivity extends Activity {
     /**
