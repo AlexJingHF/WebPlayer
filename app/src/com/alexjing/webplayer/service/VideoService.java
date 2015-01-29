@@ -51,7 +51,7 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
     /**
      * 自定义播放回调接口
      */
-    private static interface PlayerListener
+    public static interface PlayerListener
     {
         /**
          * 硬件渲染失败调用
@@ -143,7 +143,7 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
         release();
     }
 
-    private void release()
+    public void release()
     {
         if (mediaPlayer != null)
         {
@@ -255,7 +255,7 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
      * @param left 左声道
      * @param right 右声道
      */
-    public void setVolume(int left,int right)
+    public void setVolume(float left,float right)
     {
         if (isInit)
         {
@@ -365,7 +365,7 @@ public class VideoService extends Service implements MediaPlayer.OnCompletionLis
             return false;
     }
 
-    private void initialize(PlayerListener playerListener,String[] datas,long startPos,boolean isHWCodec)
+    public void initialize(PlayerListener playerListener,String[] datas,long startPos,boolean isHWCodec)
     {
         if (mediaPlayer == null)
         {

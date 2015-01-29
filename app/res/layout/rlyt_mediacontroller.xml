@@ -123,7 +123,7 @@
             </RelativeLayout>
 
             <ImageButton
-                android:id="@+id/play_button"
+                android:id="@+id/btn_play"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:background="@color/media_controller_bg"
@@ -139,7 +139,7 @@
                 android:layout_marginRight="25dp"
                 android:layout_marginTop="2dp"
                 android:background="@color/media_controller_bg"
-                android:layout_toLeftOf="@+id/play_button"
+                android:layout_toLeftOf="@+id/btn_play"
                 android:src="@drawable/ic_player_back" />
 
             <ImageButton
@@ -150,7 +150,7 @@
                 android:layout_below="@+id/rlyt_time"
                 android:layout_marginLeft="25dp"
                 android:layout_marginTop="2dp"
-                android:layout_toRightOf="@+id/play_button"
+                android:layout_toRightOf="@+id/btn_play"
                 android:src="@drawable/ic_player_forward" />
         </RelativeLayout>
     </RelativeLayout>

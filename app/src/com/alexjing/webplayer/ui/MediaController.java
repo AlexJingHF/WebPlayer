@@ -6,6 +6,8 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import com.alexjing.webplayer.R;
 
 /**
@@ -15,11 +17,29 @@ public class MediaController extends FrameLayout {
 
     private Context context;
 
-
     private Animation animSlideInTop;
     private Animation animSlideInBottom;
     private Animation animSlideOutTop;
     private Animation animSlideOutBottom;
+
+    private View root;
+
+    private View back;
+
+    private View play;
+
+    private View backWard;
+
+    private View forWard;
+
+    private TextView currentTimeTxt;
+
+    private TextView totalTimeTxt;
+
+    private TextView downloadRateTxt;
+
+    private SeekBar progressBar;
+
 
     public MediaController(Context context) {
         super(context);
@@ -41,6 +61,14 @@ public class MediaController extends FrameLayout {
         this.context = context;
         initAnimation();
         initView();
+    }
+
+    /**
+     * 释放所有资源，移除命令队列
+     */
+    public void release()
+    {
+
     }
 
     /**
@@ -74,6 +102,19 @@ public class MediaController extends FrameLayout {
 
     private void initView()
     {
+        root = View.inflate(getContext(),R.layout.rlyt_mediacontroller,this);
 
+        back = root.findViewById(R.id.btn_back);
+        backWard = root.findViewById(R.id.btn_backward);
+        forWard = root.findViewById(R.id.btn_forward);
+        play = root.findViewById(R.id.btn_play);
+
+        currentTimeTxt = (TextView) root.findViewById(R.id.txt_current_time);
+        totalTimeTxt = (TextView) root.findViewById(R.id.txt_total_time);
+        downloadRateTxt = (TextView) root.findViewById(R.id.download_speed);
+        progressBar = (SeekBar) root.findViewById(R.id.seekbar);
     }
+
+    public interface MediaControllerListener(
+
 }
